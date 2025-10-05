@@ -1,0 +1,24 @@
+from fastapi import APIRouter, Response
+from fastapi.responses import FileResponse
+from .stacking_rf import router as stacking_rf_router
+import os
+
+router = APIRouter(prefix="/k2", tags=["Kepler 2"])
+
+@router.get("/dataset")
+def get_k2_dataset():
+    # Get the absolute path to the dataset file
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    dataset_path = os.path.join(current_dir, "dataset.csv")
+
+    # Check if file exists
+    if os.path.exists(dataset_path):
+        return FileResponse(
+            path=dataset_path,
+            filename="dataset.csv",
+            media_type="text/csv"
+        )
+    else:
+        return Response(content="Dataset file not found", status_code=404)
+
+router.include_router(stacking_rf_router)
