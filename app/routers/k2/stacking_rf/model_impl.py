@@ -96,3 +96,72 @@ def predict(**kwargs):
         class_probabilities = None
 
     return prediction, confidence, class_probabilities
+
+
+def batch_predict(input_df):
+    """
+    Make predictions for multiple samples at once.
+    
+    Parameters:
+    -----------
+    input_df : pd.DataFrame
+        DataFrame containing features for multiple samples.
+        Should have columns matching FEATURE_COLUMNS.
+    
+    Returns:
+    --------
+    pd.DataFrame: DataFrame with predictions and probabilities
+    """
+    
+    # Ensure proper column order
+    X_input = input_df[FEATURE_COLUMNS].copy()
+    
+    # Apply preprocessing
+    X_imputed = imputer.transform(X_input)
+    X_scaled = scaler.transform(X_imputed)
+    
+    # Make predictions
+    predictions_encoded = model.predict(X_scaled)
+    predictions = label_encoder.inverse_transform(predictions_encoded)
+    
+    # Get probabilities if available
+    try:
+        probabilities = model.predict_proba(X_scaled)
+        confidence_scores = np.max(probabilities, axis=1)
+        
+        # Create result DataFrame
+        result_df = pd.DataFrame({
+            'prediction': predictions,
+            'confidence': confidence_scores
+        })
+        
+        # Add individual class probabilities
+        for i, class_label in enumerate(label_encoder.classes_):
+            result_df[f'prob_{class_label}'] = probabilities[:, i]
+            
+    except AttributeError:
+        result_df = pd.DataFrame({
+            'prediction': predictions
+        })
+    
+    return result_df
+
+
+def get_model_info():
+    """
+    Get information about the loaded model.
+    
+    Returns:
+    --------
+    dict: Model information including name, performance metrics, and features
+    """
+    
+    return {
+        'model_name': model_package['model_name'],
+        'rank': model_package['rank'],
+        'performance': model_package['performance'],
+        'features': FEATURE_COLUMNS,
+        'num_features': len(FEATURE_COLUMNS),
+        'classes': list(label_encoder.classes_),
+        'model_type': type(model).__name__
+    }
