@@ -4,6 +4,7 @@ from matplotlib.pylab import f
 from .config import settings
 from .routers.k2 import router as k2_router
 from .routers.kepler import router as kepler_router
+from .routers.merged import router as merged_router
 
 app = FastAPI(title="Exoplanet Prediction API", version="1.0.0")
 
@@ -24,3 +25,4 @@ def health():
 # Routers
 app.include_router(k2_router)
 app.include_router(kepler_router)
+app.include_router(merged_router)
